@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyArkanoid">
         <activity
-            android:name=".MyArkanoid"
+            android:name=".MyArkanoidActivity"
             android:label="@string/app_name"
             android:theme="@style/Theme.MyArkanoid.NoActionBar">
             <intent-filter>

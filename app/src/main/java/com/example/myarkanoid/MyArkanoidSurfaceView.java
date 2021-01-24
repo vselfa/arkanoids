@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class MyArkanoidSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
 
     // El thread
-    MyArkanoidThread game2Thread = null;
+    MyArkanoidThread myArkanoidThread = null;
 
     // Els bitmaps
     private Bitmap playButtonBitmap, paletaBitmap, backgroundBitmap, blocBitmap;
@@ -29,17 +29,17 @@ public class MyArkanoidSurfaceView extends SurfaceView implements SurfaceHolder.
     // El fons
     int ampleBackground, altBackground;
     // Les posicions
-    int xBoto, yBoto, xNau, yNau;
+    int xBoto, yBoto;
     private float mLastTouchX, mLastTouchY;
 
-    // The position of the ball
-    private int x, y, xPosition, yPosition;
+    // Posició de la pilota
+    private int x, y;
     // The vector speed of the ball
     private int xDirection = 0;     private int yDirection = 0;  // Joc parat
     private int xDirectionAux = 10;  private int yDirectionAux = 20;
     private static int radius = 20;
 
-    // The palette
+    // La paleta
     private float xPaleta, yPaleta;
     private int  ample = 200; private int alt = 30;
     private float ultimaXPaleta,  ultimaYPaleta;
@@ -50,8 +50,11 @@ public class MyArkanoidSurfaceView extends SurfaceView implements SurfaceHolder.
 
     //  Els blocs
     private ArrayList<Bloc> blocs = new ArrayList<>();
-    // Establim el número de blocs que volem
+    // Totes les files de blocs
+    private ArrayList<ArrayList<Bloc>> filesBlocs =  new ArrayList<>();
+    // Establim el número de blocs que volem -
     // => ampladaBloc = maxAmplada/numBlocs
+    // ---------------------------------------
     int numBlocs = 5; int blocSize; int numFiles = 1;
     int numBloc; // Bloc a qui pega la bola
     int linia = 10; // Per marcar la separació entre blocs
@@ -61,44 +64,6 @@ public class MyArkanoidSurfaceView extends SurfaceView implements SurfaceHolder.
     public MyArkanoidSurfaceView(Context context) {
         super(context);
         getHolder().addCallback(this);
-    }
-
-    public void fillBlocs(float maxAmplada ){
-        // Reset blocs per a iniciar noves partides
-        blocs.clear();
-        // Creem els objecte bloc. Els rectangles no calen.
-        for (int i = 0; i < numFiles; i++) {
-            for (int j = 0; j < numBlocs; j++) {
-                // Controlem que capiguen complets en pantalla
-                if (( i * blocSize + blocSize) < maxAmplada )
-                    blocs.add(new Bloc(j*blocSize,i*blocSize,blocSize));
-            }
-        }
-    }
-
-    public void newDraw(Canvas canvas) {
-        // El fons
-        canvas.drawBitmap(backgroundBitmap, null, rectBackground, null);
-        // Els botons
-        if (inici) canvas.drawBitmap(playButtonBitmap,null, rectPlay, null);
-        // La pilota
-        ball.setColor(Color.RED);
-        canvas.drawCircle(x, y, radius, ball);
-        // La paleta
-        if (!inici)
-            canvas.drawBitmap(paletaBitmap, (float) xPaleta, (float) yPaleta - 20 , null);
-        // Els blocs
-        // Log.d ("Blocs", "Pintant rectangle " ) ;
-        // Repitem tinguent en compte els blocs ocults
-        for (int i = 0; i < blocs.size(); i++){
-            // Sols pintem els blocs visibles
-            if (blocs.get(i).getVisible()) {
-                Rect r = new Rect(i*blocSize,
-                        (numFiles-1) * blocSize,
-                        (i + 1) * blocSize-linia, blocSize);
-                canvas.drawBitmap(blocBitmap, null, r, null);
-            }
-        }
     }
 
     @Override
@@ -134,10 +99,58 @@ public class MyArkanoidSurfaceView extends SurfaceView implements SurfaceHolder.
         rectPlay = new Rect(0, yBoto,  getWidth(), getHeight());
         rectPause = rectPlay ;
         // Starting the thread
-        if (game2Thread!=null) return;
-        game2Thread = new MyArkanoidThread(getHolder());
-        game2Thread.start();
+        if (myArkanoidThread !=null) return;
+        myArkanoidThread = new MyArkanoidThread(getHolder());
+        myArkanoidThread.start();
     }
+
+    public void fillBlocs(float maxAmplada ){
+        // Reset blocs per a iniciar noves partides
+        filesBlocs.clear();
+        blocs.clear();
+        // Creem els objectes bloc. Els rectangles no calen.
+        for (int i = 0; i < numFiles; i++) {
+            for (int j = 0; j < numBlocs; j++) {
+                // Controlem que càpiguen complets en pantalla
+                if (( j * blocSize + blocSize) < maxAmplada )
+                    blocs.add(new Bloc(j*blocSize,j*blocSize,blocSize));
+            }
+            //filesBlocs.add (blocs);
+        }
+    }
+
+
+    public void newDraw(Canvas canvas) {
+        // El fons
+        canvas.drawBitmap(backgroundBitmap, null, rectBackground, null);
+        // Els botons
+        if (inici) canvas.drawBitmap(playButtonBitmap,null, rectPlay, null);
+        // La pilota
+        ball.setColor(Color.RED);
+        canvas.drawCircle(x, y, radius, ball);
+        // La paleta
+        if (!inici)
+            canvas.drawBitmap(paletaBitmap, (float) xPaleta, (float) yPaleta - 20 , null);
+        // Els blocs
+        // Log.d ("Blocs", "Pintant rectangle " ) ;
+        // Repitem tinguent en compte els blocs ocults
+
+        for (int i = 0; i < numFiles; i++) {
+            for (int j = 0; j < blocs.size(); j++) {
+                // Sols pintem els blocs visibles
+                //if (filesBlocs.get(i).get(j).getVisible()) {
+                if (blocs.get(j).getVisible()) {
+                    Rect r = new Rect(j * blocSize,
+                            (numFiles - 1) * blocSize,
+                            (j + 1) * blocSize - linia, (numFiles - 1) * blocSize);
+                    canvas.drawBitmap(blocBitmap, null, r, null);
+                    //Log.d ("Files", "Pintant rectangle r:" + i + j + " " + filesBlocs.get(i).get(j).getVisible() ) ;
+                }
+            }
+        }
+    }
+
+
 
     @Override
     public void surfaceChanged(
@@ -194,7 +207,7 @@ public class MyArkanoidSurfaceView extends SurfaceView implements SurfaceHolder.
     } // Fi  onTouchEvent
 
     public void stopThread () {
-        game2Thread.stop = true;
+        myArkanoidThread.stop = true;
     }
 
     // The thread -----------------------------------------------
